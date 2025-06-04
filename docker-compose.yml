@@ -1,0 +1,95 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # Port AMQP
+      - "15672:15672" # Port interface de gestion
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rabit-network
+
+  worker-add:
+    build: .
+    command: npm run worker add
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+  worker-sub:
+    build: .
+    command: npm run worker sub
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+  worker-mul:
+    build: .
+    command: npm run worker mul
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+  worker-div:
+    build: .
+    command: npm run worker div
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+  client:
+    build: .
+    command: npm run client
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+  result:
+    build: .
+    command: npm run result
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - QUEUE_NAME=calcul_queue
+      - RESULT_QUEUE=result_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabit-network
+
+networks:
+  rabit-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
